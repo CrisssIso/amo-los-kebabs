@@ -240,6 +240,47 @@ body{
 }
 .rs-types{display:flex;gap:5px}
 
+/* ── SHINY TOGGLE BUTTON ── */
+.shiny-toggle{
+  width:24px;height:24px;flex-shrink:0;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--rs-border);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;margin-left:4px;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.shiny-toggle:hover{background:rgba(255,210,60,.12);border-color:#c8a030}
+.shiny-toggle:active{transform:scale(.92)}
+.shiny-star{width:14px;height:14px;fill:#3a4a3a;transition:fill .15s}
+.shiny-toggle[aria-pressed="true"]{
+  background:rgba(255,210,60,.18);border-color:#ffd23c;
+  box-shadow:0 0 8px rgba(255,210,60,.4);
+}
+.shiny-toggle[aria-pressed="true"] .shiny-star{
+  fill:#ffd23c;filter:drop-shadow(0 0 3px rgba(255,210,60,.8));
+}
+
+/* ── SHINY BADGE (over sprite) ── */
+.shiny-badge{
+  position:absolute;top:8px;right:8px;z-index:3;
+  font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:1px;color:#3a2a00;
+  background:linear-gradient(135deg,#ffe178,#ffb800);
+  padding:2px 7px;border-radius:10px;
+  box-shadow:0 0 8px rgba(255,184,0,.6);
+  opacity:0;transform:translateY(-4px) scale(.85);
+  transition:opacity .2s,transform .2s;
+  pointer-events:none;
+}
+.shiny-badge.show{opacity:1;transform:translateY(0) scale(1)}
+/* golden glow on sprite column when shiny mode is active */
+.rs-sprite-col.shiny-active{
+  background:radial-gradient(ellipse at center, rgba(255,210,60,.08), #0d1a0f 70%);
+}
+.rs-sprite-col.shiny-active .main-sprite{
+  filter:drop-shadow(0 0 16px rgba(255,210,60,.55));
+}
+
 /* ── MAIN CONTENT AREA ── */
 .rs-body{
   flex:1;display:flex;overflow:hidden;position:relative;z-index:1;
@@ -361,6 +402,18 @@ body{
   box-shadow:0 3px 6px rgba(0,0,0,.4);transition:filter .1s;
 }
 .ab-btn:hover{filter:brightness(1.2)}
+.ab-btn:active{transform:scale(.9)}
+.ab-a{position:relative}
+.ab-a.playing::after{
+  content:'';position:absolute;inset:-4px;
+  border-radius:50%;border:2px solid #ff6a40;
+  animation:cryPulse .5s ease-out;
+  pointer-events:none;
+}
+@keyframes cryPulse{
+  0%{transform:scale(.7);opacity:.9}
+  100%{transform:scale(1.6);opacity:0}
+}
 .ab-a{background:#c82000}
 .ab-b{background:#0060c8}
 
@@ -436,6 +489,8 @@ body{
   /* d-pad/buttons stay tappable size */
   .ab-btn{width:36px;height:36px;font-size:13px}
   .dpad{width:64px;height:64px}
+  .shiny-toggle{width:30px;height:30px}
+  .shiny-star{width:17px;height:17px}
 }
 
 @media (max-width:420px){
@@ -506,6 +561,9 @@ body{
           <div class="rs-num" id="rsNum">#722</div>
           <div class="rs-name" id="rsName">ROWLET</div>
           <div class="rs-types" id="rsTypes"></div>
+          <button class="shiny-toggle" id="shinyToggle" type="button" title="Ver versión shiny" aria-pressed="false">
+            <svg viewBox="0 0 24 24" class="shiny-star"><path d="M12 1l2.6 7.2L22 11l-7.4 2.8L12 21l-2.6-7.2L2 11l7.4-2.8z"/></svg>
+          </button>
         </div>
 
         <div class="rs-body">
@@ -513,6 +571,7 @@ body{
           <!-- SPRITE COLUMN -->
           <div class="rs-sprite-col">
             <div class="sprite-scan"></div>
+            <div class="shiny-badge" id="shinyBadge">✨ SHINY</div>
             <img class="main-sprite" id="mainSprite" src="" alt="">
             <div class="sprite-mini-data" id="miniData"></div>
           </div>
@@ -693,6 +752,13 @@ function spriteArtSources(id){
     `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
   ];
 }
+function spriteArtShinySources(id){
+  return [
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${id}.png`,
+    `https://cdn.jsdelivr.net/gh/PokeAPI/sprites/sprites/pokemon/other/official-artwork/shiny/${id}.png`,
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`
+  ];
+}
 // Engancha una cascada de fuentes a un <img>: si una falla (onerror), prueba la siguiente.
 function loadWithFallback(img, sources){
   let i=0;
@@ -705,8 +771,38 @@ function loadWithFallback(img, sources){
   img.src=sources[0];
 }
 
-// ── STATE ────────────────────────────────────────────────────
-let curId=722, filtered=[...PKM];
+function crySources(id){
+  return [
+    `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`,
+    `https://cdn.jsdelivr.net/gh/PokeAPI/cries/cries/pokemon/latest/${id}.ogg`,
+    `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/legacy/${id}.ogg`
+  ];
+}
+// Reproduce el cry probando cada fuente en cascada hasta que una funcione.
+function playCry(id){
+  const sources=crySources(id);
+  const btn=document.querySelector('.ab-a');
+  let i=0;
+  const tryPlay=()=>{
+    const audio=new Audio(sources[i]);
+    audio.volume=0.85;
+    audio.addEventListener('error',()=>{
+      i++;
+      if(i<sources.length) tryPlay();
+    });
+    audio.play().catch(()=>{
+      i++;
+      if(i<sources.length) tryPlay();
+    });
+  };
+  tryPlay();
+  if(btn){
+    btn.classList.remove('playing');
+    requestAnimationFrame(()=>btn.classList.add('playing'));
+    setTimeout(()=>btn.classList.remove('playing'),500);
+  }
+}
+let curId=722, filtered=[...PKM], shinyMode=false;
 
 // ── RENDER LIST ──────────────────────────────────────────────
 function renderList(data){
@@ -743,9 +839,9 @@ function select(id){
   document.getElementById('rsName').textContent=p.name;
   document.getElementById('rsTypes').innerHTML=p.types.map(badge).join('');
 
-  // sprite — cascada de fuentes: artwork oficial (varias CDNs) -> sprite simple
+  // sprite — cascada de fuentes: artwork oficial (normal o shiny) -> sprite simple
   const img=document.getElementById('mainSprite');
-  loadWithFallback(img, spriteArtSources(p.id));
+  loadWithFallback(img, shinyMode ? spriteArtShinySources(p.id) : spriteArtSources(p.id));
 
   // mini data under sprite
   document.getElementById('miniData').innerHTML=`
@@ -793,12 +889,27 @@ function filterList(){
   renderList(filtered);
 }
 
+// ── SHINY TOGGLE ─────────────────────────────────────────────
+function applyShinyUI(){
+  document.getElementById('shinyToggle').setAttribute('aria-pressed', shinyMode);
+  document.getElementById('shinyBadge').classList.toggle('show', shinyMode);
+  document.querySelector('.rs-sprite-col').classList.toggle('shiny-active', shinyMode);
+}
+document.getElementById('shinyToggle').addEventListener('click',()=>{
+  shinyMode=!shinyMode;
+  applyShinyUI();
+  select(curId);
+});
+document.querySelector('.ab-a').addEventListener('click',()=>playCry(curId));
+
 // ── KEYBOARD NAV ─────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT') return;
   const i=filtered.findIndex(p=>p.id===curId);
   if(e.key==='ArrowDown'&&i<filtered.length-1) select(filtered[i+1].id);
   if(e.key==='ArrowUp'  &&i>0)                  select(filtered[i-1].id);
+  if(e.key.toLowerCase()==='s') document.getElementById('shinyToggle').click();
+  if(e.key.toLowerCase()==='a') playCry(curId);
 });
 
 // ── INIT ─────────────────────────────────────────────────────
