@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotom Pokédex — Alola</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --red-hi:#e8000d;
+  --red-mid:#c00008;
+  --red-lo:#900005;
+  --hinge:#555;
+  --lcd-bg:#0d1f0f;
+  --lcd-bg2:#081408;
+  --lcd-green:#39ff68;
+  --lcd-green2:#00d44a;
+  --lcd-dim:#1a4a28;
+  --lcd-dimmer:#0d2a16;
+  --amber:#ffb800;
+  --white:#f0ede6;
+  --screen-frame:#1a1a1a;
+  --btn-shadow:rgba(0,0,0,.5);
+  --rs-bg:#1a2e1e; /* right screen bg */
+  --rs-border:#254830;
+}
+
+body{
+  background:radial-gradient(ellipse at center, #3a0a08 0%, #1a0404 100%);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  font-family:'Rajdhani',sans-serif;
+  overflow:hidden;
+}
+
+/* ══════════════════════════════════════
+   DEVICE SHELL
+══════════════════════════════════════ */
+.device{
+  width:990px;height:640px;
+  display:flex;
+  filter:drop-shadow(0 24px 70px rgba(0,0,0,.9));
+  position:relative;
+}
+
+/* ── LEFT HALF (red body) ── */
+.half-left{
+  width:470px;flex-shrink:0;
+  background:linear-gradient(165deg, #f02418 0%, #c8000a 35%, #a00006 70%, #8a0004 100%);
+  border-radius:24px 0 0 24px;
+  border:2px solid #6a0003;
+  border-right:none;
+  display:flex;flex-direction:column;
+  padding:16px 14px 12px;
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,120,100,.2), inset -4px 0 8px rgba(0,0,0,.3);
+}
+/* glossy top sheen */
+.half-left::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),transparent);
+  border-radius:24px 0 0 0;pointer-events:none;
+}
+/* camera dot */
+.cam-dot{
+  position:absolute;top:14px;right:22px;
+  width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 33% 33%, #88ccff, #1155aa);
+  border:2px solid #222;
+  box-shadow:0 0 4px rgba(100,180,255,.4);
+}
+
+/* ── MAIN LCD SCREEN (left) ── */
+.screen-wrap{
+  background:var(--screen-frame);
+  border-radius:8px;
+  border:3px solid #111;
+  box-shadow:inset 0 0 18px #000, 0 0 0 2px #444;
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
+.lcd{
+  background:var(--lcd-bg2);
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+/* scanlines */
+.lcd::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);
+  pointer-events:none;z-index:50;
+}
+
+/* top bar */
+.lcd-topbar{
+  background:#060e07;padding:6px 10px;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--lcd-dim);flex-shrink:0;
+}
+.rotom-eye{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 38% 35%, #fffacc, #ffd900 55%, #b07800);
+  box-shadow:0 0 8px rgba(255,215,0,.5);
+  position:relative;animation:blink 6s infinite;
+}
+.rotom-eye::after{
+  content:'';position:absolute;
+  width:8px;height:8px;background:#1a0a00;border-radius:50%;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}93%,97%{transform:scaleY(.06)}}
+.lcd-title{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:2px;
+  color:var(--lcd-green);text-shadow:0 0 6px var(--lcd-green2);
+}
+
+/* search */
+.lcd-search{
+  padding:5px 8px;background:#060e07;
+  border-bottom:1px solid var(--lcd-dim);flex-shrink:0;
+}
+.lcd-search input{
+  width:100%;background:#020804;
+  border:1px solid var(--lcd-dim);border-radius:3px;
+  color:var(--lcd-green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;padding:4px 8px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.lcd-search input:focus{border-color:var(--lcd-green2);box-shadow:0 0 6px rgba(0,212,74,.2)}
+.lcd-search input::placeholder{color:var(--lcd-dim)}
+
+/* list */
+.poke-list{flex:1;overflow-y:auto;padding:2px 0;position:relative;z-index:1}
+.poke-list::-webkit-scrollbar{width:3px}
+.poke-list::-webkit-scrollbar-thumb{background:var(--lcd-dim)}
+.poke-list::-webkit-scrollbar-track{background:transparent}
+.poke-row{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;cursor:pointer;
+  border-left:3px solid transparent;transition:background .1s;
+}
+.poke-row:hover{background:rgba(57,255,104,.07)}
+.poke-row.active{background:rgba(57,255,104,.13);border-left-color:var(--lcd-green)}
+.pr-num{font-family:'Share Tech Mono',monospace;font-size:10px;color:#2a7840;min-width:32px;flex-shrink:0}
+.pr-thumb{width:30px;height:30px;image-rendering:pixelated;flex-shrink:0}
+.pr-name{font-size:13px;font-weight:600;color:var(--white);flex:1}
+.pr-types{display:flex;gap:2px;margin-left:auto}
+
+/* status strip */
+.lcd-status{
+  background:#060e07;padding:4px 10px;
+  border-top:1px solid var(--lcd-dim);
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.led{width:5px;height:5px;background:var(--lcd-green);border-radius:50%;
+  box-shadow:0 0 5px var(--lcd-green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.lcd-status span{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:#2a7840;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* buttons under left screen */
+.left-btns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+.btn{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid rgba(0,0,0,.5);cursor:pointer;
+  transition:filter .1s;box-shadow:0 2px 4px var(--btn-shadow);
+}
+.btn:hover{filter:brightness(1.3)}
+.btn-r{background:#ff3a40}
+.btn-a{background:var(--amber)}
+.btn-g{background:var(--lcd-green)}
+
+/* ── HINGE ── */
+.hinge{
+  width:24px;flex-shrink:0;
+  background:linear-gradient(180deg,#3a3a3a,#222 40%,#3a3a3a);
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;
+  border-top:2px solid #444;border-bottom:2px solid #444;
+  position:relative;z-index:2;
+}
+.hinge-bolt{
+  width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #888, #333);
+  border:1px solid #555;
+}
+
+/* ── RIGHT HALF (dark body) ── */
+.half-right{
+  flex:1;
+  background:linear-gradient(160deg,#1e1e1e 0%,#141414 60%,#0e0e0e 100%);
+  border-radius:0 24px 24px 0;
+  border:2px solid #111;border-left:none;
+  display:flex;flex-direction:column;
+  padding:16px 16px 12px;
+  box-shadow:inset 4px 0 8px rgba(0,0,0,.4);
+}
+
+/* ── RIGHT SCREEN ── */
+.screen-right-wrap{
+  background:#111;border-radius:8px;
+  border:3px solid #0a0a0a;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.9), 0 0 0 2px #333;
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
+.rs{
+  background:var(--rs-bg);
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+/* scanlines right */
+.rs::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 3px);
+  pointer-events:none;z-index:50;
+}
+
+/* top bar right */
+.rs-topbar{
+  background:#0f1e12;padding:7px 12px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--rs-border);flex-shrink:0;
+}
+.rs-num{
+  font-family:'Share Tech Mono',monospace;
+  font-size:20px;color:var(--lcd-green);
+  text-shadow:0 0 10px var(--lcd-green2);
+  min-width:60px;letter-spacing:1px;
+}
+.rs-name{
+  font-size:20px;font-weight:700;color:#e8f4e8;
+  text-transform:uppercase;letter-spacing:1px;flex:1;
+}
+.rs-types{display:flex;gap:5px}
+
+/* ── MAIN CONTENT AREA ── */
+.rs-body{
+  flex:1;display:flex;overflow:hidden;position:relative;z-index:1;
+}
+
+/* sprite column */
+.rs-sprite-col{
+  width:170px;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:10px 8px;
+  border-right:1px solid var(--rs-border);
+  background:#0d1a0f;
+  position:relative;
+}
+/* subtle hex grid bg */
+.rs-sprite-col::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle, rgba(57,255,104,.04) 1px, transparent 1px);
+  background-size:18px 18px;
+  pointer-events:none;
+}
+.main-sprite{
+  width:148px;height:148px;
+  image-rendering:auto;
+  filter:drop-shadow(0 0 14px rgba(57,255,104,.35));
+  animation:float 3.2s ease-in-out infinite;
+  position:relative;z-index:1;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.sprite-scan{
+  position:absolute;width:148px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--lcd-green),transparent);
+  opacity:.55;animation:sweep 3.2s ease-in-out infinite;z-index:2;
+}
+@keyframes sweep{0%{top:20%;opacity:0}5%{opacity:.55}95%{opacity:.55}100%{top:80%;opacity:0}}
+
+.sprite-mini-data{
+  width:100%;margin-top:10px;position:relative;z-index:1;
+}
+.smd-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:2px 4px;border-bottom:1px solid #1a3020;
+}
+.smd-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:#2a7040;letter-spacing:1px}
+.smd-val{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--lcd-green)}
+
+/* right info column */
+.rs-info-col{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  padding:0;
+}
+
+/* stats section */
+.rs-stats{
+  padding:8px 12px;border-bottom:1px solid var(--rs-border);flex-shrink:0;
+}
+.stat-title{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:#ff8c40;margin-bottom:6px;
+  display:flex;align-items:center;gap:5px;
+}
+.stat-title::before{content:'';width:12px;height:1px;background:#ff6a00}
+.stat-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.sn{font-family:'Share Tech Mono',monospace;font-size:9px;color:#2a7040;width:26px;flex-shrink:0}
+.sb-bg{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.sb-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.sv{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--lcd-green);width:24px;text-align:right;flex-shrink:0}
+
+/* data grid */
+.rs-datagrid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:6px;padding:8px 12px;
+  border-bottom:1px solid var(--rs-border);flex-shrink:0;
+}
+.dg-cell{
+  background:#0d1a0f;border:1px solid #1a3020;border-radius:5px;
+  padding:5px 8px;
+}
+.dg-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:#2a6040;margin-bottom:2px;text-transform:uppercase}
+.dg-val{font-size:11px;font-weight:600;color:var(--lcd-green)}
+
+/* description */
+.rs-desc{
+  flex:1;overflow-y:auto;padding:8px 12px;
+}
+.rs-desc::-webkit-scrollbar{width:3px}
+.rs-desc::-webkit-scrollbar-thumb{background:var(--lcd-dim)}
+.desc-lbl{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:#ff8c40;margin-bottom:6px;
+  display:flex;align-items:center;gap:5px;
+}
+.desc-lbl::before{content:'';width:12px;height:1px;background:#ff6a00}
+.desc-txt{font-size:12px;line-height:1.7;color:#c8e0c8;opacity:.9}
+
+/* right bottom buttons */
+.right-btns{
+  display:flex;gap:0;margin-top:10px;justify-content:flex-end;align-items:center;gap:10px;
+}
+.dpad{
+  width:56px;height:56px;position:relative;flex-shrink:0;
+}
+.dpad-h,.dpad-v{
+  position:absolute;background:#2a2a2a;border-radius:3px;
+  border:2px solid #111;box-shadow:0 2px 4px rgba(0,0,0,.5);
+}
+.dpad-h{width:56px;height:18px;top:50%;transform:translateY(-50%);left:0}
+.dpad-v{height:56px;width:18px;left:50%;transform:translateX(-50%);top:0}
+.dpad-center{
+  position:absolute;width:18px;height:18px;background:#222;border-radius:2px;
+  top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;
+}
+.ab-btns{display:flex;gap:8px}
+.ab-btn{
+  width:30px;height:30px;border-radius:50%;
+  font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(0,0,0,.5);cursor:pointer;color:#fff;
+  box-shadow:0 3px 6px rgba(0,0,0,.4);transition:filter .1s;
+}
+.ab-btn:hover{filter:brightness(1.2)}
+.ab-a{background:#c82000}
+.ab-b{background:#0060c8}
+
+/* ── TYPE BADGES ── */
+.tbadge{
+  font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  padding:2px 6px;border-radius:3px;border:1px solid;
+}
+
+/* no results */
+.no-res{padding:30px;text-align:center;color:var(--lcd-dim);font-family:'Share Tech Mono',monospace;font-size:11px}
+
+/* ══════════════════════════════════════
+   RESPONSIVE / MÓVIL
+   El dispositivo pasa de "lado a lado" (landscape)
+   a "apilado" (vertical) en pantallas estrechas.
+══════════════════════════════════════ */
+@media (max-width:880px){
+  html,body{height:auto;min-height:100vh}
+  body{
+    overflow-y:auto;overflow-x:hidden;
+    align-items:flex-start;
+    padding:14px 0;
+  }
+  .device{
+    width:100%;max-width:420px;height:auto;
+    flex-direction:column;
+    filter:drop-shadow(0 14px 40px rgba(0,0,0,.85));
+  }
+
+  /* left half becomes top half */
+  .half-left{
+    width:100%;border-radius:20px 20px 0 0;
+    border:2px solid #6a0003;border-bottom:none;
+    padding:14px 12px 10px;
+  }
+  .half-left::before{border-radius:20px 20px 0 0}
+
+  /* fixed-height screen so the device doesn't become a single giant scroller */
+  .screen-wrap{height:62vh;min-height:380px;max-height:520px}
+
+  /* hinge becomes a horizontal divider */
+  .hinge{
+    width:100%;height:18px;
+    flex-direction:row;justify-content:center;gap:18px;
+    border-top:2px solid #444;border-bottom:2px solid #444;
+    border-left:none;border-right:none;
+  }
+
+  /* right half becomes bottom half */
+  .half-right{
+    width:100%;border-radius:0 0 20px 20px;
+    border:2px solid #111;border-top:none;
+    padding:14px 12px 12px;
+  }
+  .screen-right-wrap{min-height:480px}
+
+  .rs-body{flex-direction:column;overflow-y:auto}
+  .rs-sprite-col{
+    width:100%;border-right:none;
+    border-bottom:1px solid var(--rs-border);
+    padding:14px 8px;
+  }
+  .main-sprite{width:120px;height:120px}
+  .sprite-scan{width:120px}
+
+  .rs-info-col{overflow:visible}
+  .rs-desc{flex:none;max-height:none}
+
+  .rs-name{font-size:17px}
+  .rs-num{font-size:17px;min-width:50px}
+
+  /* d-pad/buttons stay tappable size */
+  .ab-btn{width:36px;height:36px;font-size:13px}
+  .dpad{width:64px;height:64px}
+}
+
+@media (max-width:420px){
+  .device{max-width:100%;padding:0 6px}
+  .screen-wrap{height:58vh;min-height:340px}
+  .rs-name{font-size:15px}
+  .lcd-title{font-size:9px}
+  .pr-name{font-size:12px}
+}
+
+/* allow tap targets to feel native on touch devices */
+@media (hover:none) and (pointer:coarse){
+  .poke-row{padding:8px 10px}
+  .ab-btn,.btn{cursor:default}
+}
+</style>
+</head>
+<body>
+<div class="device">
+
+  <!-- ═══════ LEFT HALF ═══════ -->
+  <div class="half-left">
+    <div class="cam-dot"></div>
+
+    <div class="screen-wrap">
+      <div class="lcd">
+
+        <div class="lcd-topbar">
+          <div class="rotom-eye"></div>
+          <span class="lcd-title">ROTOM DEX · ALOLA</span>
+        </div>
+
+        <div class="lcd-search">
+          <input id="searchInput" type="text" placeholder="Buscar nombre, nº o tipo…" oninput="filterList()">
+        </div>
+
+        <div class="poke-list" id="pokeList"></div>
+
+        <div class="lcd-status">
+          <div class="led"></div>
+          <span id="statusTxt">SISTEMA ACTIVO · REGIÓN ALOLA</span>
+          <span style="margin-left:auto;color:var(--lcd-dim)" id="cntTxt">86 PKM</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="left-btns">
+      <div class="btn btn-r"></div>
+      <div class="btn btn-a"></div>
+      <div class="btn btn-g"></div>
+    </div>
+  </div><!-- /half-left -->
+
+  <!-- ═══════ HINGE ═══════ -->
+  <div class="hinge">
+    <div class="hinge-bolt"></div>
+    <div class="hinge-bolt"></div>
+  </div>
+
+  <!-- ═══════ RIGHT HALF ═══════ -->
+  <div class="half-right">
+
+    <div class="screen-right-wrap">
+      <div class="rs">
+
+        <div class="rs-topbar">
+          <div class="rs-num" id="rsNum">#722</div>
+          <div class="rs-name" id="rsName">ROWLET</div>
+          <div class="rs-types" id="rsTypes"></div>
+        </div>
+
+        <div class="rs-body">
+
+          <!-- SPRITE COLUMN -->
+          <div class="rs-sprite-col">
+            <div class="sprite-scan"></div>
+            <img class="main-sprite" id="mainSprite" src="" alt="">
+            <div class="sprite-mini-data" id="miniData"></div>
+          </div>
+
+          <!-- INFO COLUMN -->
+          <div class="rs-info-col">
+
+            <div class="rs-stats">
+              <div class="stat-title">ESTADÍSTICAS BASE</div>
+              <div id="statsRows"></div>
+            </div>
+
+            <div class="rs-datagrid" id="dataGrid"></div>
+
+            <div class="rs-desc">
+              <div class="desc-lbl">ENTRADA POKÉDEX</div>
+              <div class="desc-txt" id="descTxt">—</div>
+            </div>
+
+          </div><!-- /rs-info-col -->
+        </div><!-- /rs-body -->
+
+      </div>
+    </div><!-- /screen-right-wrap -->
+
+    <div class="right-btns">
+      <div class="dpad">
+        <div class="dpad-h"></div>
+        <div class="dpad-v"></div>
+        <div class="dpad-center"></div>
+      </div>
+      <div class="ab-btns">
+        <div class="ab-btn ab-b">B</div>
+        <div class="ab-btn ab-a">A</div>
+      </div>
+    </div>
+
+  </div><!-- /half-right -->
+</div><!-- /device -->
+
+<script>
+// ── TYPE COLORS ──────────────────────────────────────────────
+const TC={
+  Normal:  {bg:'rgba(168,168,120,.2)',border:'#a8a878',color:'#d8d8b0'},
+  Fire:    {bg:'rgba(240,128,48,.2)', border:'#f08030',color:'#f8a878'},
+  Water:   {bg:'rgba(104,144,240,.2)',border:'#6890f0',color:'#98b8f8'},
+  Grass:   {bg:'rgba(120,200,80,.2)', border:'#78c850',color:'#98e070'},
+  Electric:{bg:'rgba(248,208,48,.2)', border:'#f8d030',color:'#f8e868'},
+  Ice:     {bg:'rgba(152,216,216,.2)',border:'#98d8d8',color:'#b8ecec'},
+  Fighting:{bg:'rgba(192,48,40,.2)',  border:'#c03028',color:'#e07070'},
+  Poison:  {bg:'rgba(160,64,160,.2)', border:'#a040a0',color:'#c878c8'},
+  Ground:  {bg:'rgba(224,192,104,.2)',border:'#e0c068',color:'#e8d898'},
+  Flying:  {bg:'rgba(168,144,240,.2)',border:'#a890f0',color:'#c0b0f8'},
+  Psychic: {bg:'rgba(248,88,136,.2)', border:'#f85888',color:'#f898b8'},
+  Bug:     {bg:'rgba(168,184,32,.2)', border:'#a8b820',color:'#c8d848'},
+  Rock:    {bg:'rgba(184,160,56,.2)', border:'#b8a038',color:'#d8c870'},
+  Ghost:   {bg:'rgba(112,88,152,.2)', border:'#705898',color:'#9878c8'},
+  Dragon:  {bg:'rgba(112,56,248,.2)', border:'#7038f8',color:'#9868f8'},
+  Dark:    {bg:'rgba(112,88,72,.2)',  border:'#705848',color:'#a89080'},
+  Steel:   {bg:'rgba(184,184,208,.2)',border:'#b8b8d0',color:'#d0d0e8'},
+  Fairy:   {bg:'rgba(238,153,172,.2)',border:'#ee99ac',color:'#f8c0cc'},
+};
+function badge(t){const c=TC[t]||{bg:'rgba(150,150,150,.2)',border:'#aaa',color:'#ccc'};return`<span class="tbadge" style="background:${c.bg};border-color:${c.border};color:${c.color}">${t}</span>`}
+
+// stat bar color based on value
+function statColor(v){
+  if(v>=100) return 'linear-gradient(90deg,#00c844,#39ff68)';
+  if(v>=70)  return 'linear-gradient(90deg,#88cc00,#aee830)';
+  if(v>=50)  return 'linear-gradient(90deg,#e8a000,#ffcc00)';
+  return       'linear-gradient(90deg,#cc3000,#ff5020)';
+}
+
+// ── POKÉMON DATA ─────────────────────────────────────────────
+const PKM=[
+  {id:722,name:'Rowlet',    types:['Grass','Flying'], cat:'Hierba Búho',   ability:'Frondosura',      w:'1.5 kg', h:'0.3 m',stats:[68,55,55,50,50,42], desc:'Realiza la fotosíntesis durante el día, acumulando energía. Al atardecer comienza su actividad, pateando y lanzando plumas afiladas como hojas.'},
+  {id:723,name:'Dartrix',   types:['Grass','Flying'], cat:'Cuchilla Hoja', ability:'Frondosura',      w:'16.0 kg',h:'0.7 m',stats:[78,75,75,70,70,52], desc:'Extremadamente meticuloso con su apariencia. Puede lanzar plumas con precisión milimétrica, pero a veces erra cuando su pelaje está sucio.'},
+  {id:724,name:'Decidueye', types:['Grass','Ghost'],  cat:'Flecha Alada',  ability:'Frondosura',      w:'36.6 kg',h:'1.6 m',stats:[78,107,75,100,100,70],desc:'Dispara flechas de plumas con gran rapidez. Una flecha puede traspasar el espíritu de un rival para paralizarlo de miedo.'},
+  {id:725,name:'Litten',    types:['Fire'],           cat:'Gato Fuego',    ability:'Combustión',      w:'4.3 kg', h:'0.4 m',stats:[45,65,40,60,40,70], desc:'Su pelaje inflamable arde cuando se acicala. Acumula pelo en su cuerpo y lo transforma en bolas de fuego explosivas.'},
+  {id:726,name:'Torracat',  types:['Fire'],           cat:'Gato Fuego',    ability:'Combustión',      w:'25.0 kg',h:'0.7 m',stats:[65,85,50,80,50,90], desc:'De la campana de su cuello salen llamas. Sus garras son tan fuertes que puede destruir muros con un solo golpe certero.'},
+  {id:727,name:'Incineroar',types:['Fire','Dark'],    cat:'Llama Bruta',   ability:'Combustión',      w:'83.0 kg',h:'1.8 m',stats:[95,115,90,80,90,60], desc:'Actúa para la multitud. Aunque parece cruel, nunca ataca a los entrenadores que se interponen para proteger a sus Pokémon.'},
+  {id:728,name:'Popplio',   types:['Water'],          cat:'León Mar',      ability:'Caudal Fuerte',   w:'7.5 kg', h:'0.4 m',stats:[50,54,54,66,56,40], desc:'Saca burbujas por su nariz. Es torpe en tierra, pero bajo el agua nada a más de 40 km/h usando sus aletas como propulsores.'},
+  {id:729,name:'Brionne',   types:['Water'],          cat:'León Mar Pop',  ability:'Caudal Fuerte',   w:'17.5 kg',h:'0.6 m',stats:[60,69,69,91,81,50], desc:'Baila con gracia mientras lucha y nunca deja que nadie vea su sufrimiento. Persiste hasta lograr dominar cualquier baile.'},
+  {id:730,name:'Primarina', types:['Water','Fairy'],  cat:'Soprano',       ability:'Caudal Fuerte',   w:'44.0 kg',h:'1.8 m',stats:[80,74,74,126,116,60],desc:'Manipula globos de agua con el canto. Cada Primarina tiene su propia melodía única, transmitida de generación en generación.'},
+  {id:731,name:'Pikipek',   types:['Normal','Flying'],cat:'Pájaro Taladro',ability:'Pico Certero',    w:'1.2 kg', h:'0.3 m',stats:[35,75,30,30,30,65], desc:'Golpea los árboles 16 veces por segundo con su pico. Almacena nueces en los huecos y las usa como proyectiles contra rivales.'},
+  {id:732,name:'Trumbeak',  types:['Normal','Flying'],cat:'Pájaro Trompeta',ability:'Pico Certero',   w:'14.8 kg',h:'0.6 m',stats:[55,85,50,40,50,75], desc:'Comunica información sobre comida y peligros usando distintos ritmos de picoteos. Puede almacenar comida en su pico.'},
+  {id:733,name:'Toucannon', types:['Normal','Flying'],cat:'Cañón Pico',    ability:'Pico Certero',    w:'26.0 kg',h:'1.1 m',stats:[80,120,75,75,75,60], desc:'Calienta la base de su pico para disparar semillas como balas. Sus disparos pueden romper rocas con facilidad.'},
+  {id:734,name:'Yungoos',   types:['Normal'],         cat:'Comadreja',     ability:'Estresado',       w:'6.0 kg', h:'0.4 m',stats:[48,70,30,30,30,45], desc:'Patrulla un territorio definido buscando presas. Fue introducido en Alola para controlar la superpoblación de Rattata.'},
+  {id:735,name:'Gumshoos',  types:['Normal'],         cat:'Vigilante',     ability:'Estresado',       w:'14.2 kg',h:'0.7 m',stats:[88,110,60,55,60,45], desc:'Persiste en acechar a sus presas durante horas. Su grueso pelaje lo protege del sol incluso pasando el día entero afuera.'},
+  {id:736,name:'Grubbin',   types:['Bug'],            cat:'Larva',         ability:'Levitación',      w:'4.4 kg', h:'0.4 m',stats:[47,62,45,55,45,46], desc:'Usa sus pinzas para cavar madrigueras. Sus mandíbulas son tan fuertes que pueden atravesar gruesos troncos de árboles.'},
+  {id:737,name:'Charjabug', types:['Bug','Electric'], cat:'Batería',       ability:'Batería',         w:'10.5 kg',h:'0.5 m',stats:[57,82,95,55,75,36], desc:'La comida que ingiere se convierte en electricidad en su interior. Puede cargarse conectándose a enchufes eléctricos.'},
+  {id:738,name:'Vikavolt',  types:['Bug','Electric'], cat:'Cañón Stag',    ability:'Levitación',      w:'45.0 kg',h:'1.5 m',stats:[77,70,90,145,75,43], desc:'Aprisiona a Charjabug en sus mandíbulas para usar su electricidad y dirigir poderosos rayos como un cañón.'},
+  {id:739,name:'Crabrawler', types:['Fighting'],      cat:'Pugilista',     ability:'Hipercut',        w:'7.0 kg', h:'0.6 m',stats:[47,82,57,42,47,63], desc:'Aspira a ser el más alto; tiene tendencia a trepar. Sus pinzas han evolucionado para ser sus principales armas de combate.'},
+  {id:740,name:'Crabominable',types:['Fighting','Ice'],cat:'Peleas Frío',  ability:'Hipercut',        w:'180.0 kg',h:'1.7 m',stats:[97,132,77,62,67,43],desc:'Fue subiendo en busca de poder hasta quedar atrapado en las cimas nevadas. Sus puñetazos helados congelan todo lo que golpean.'},
+  {id:741,name:'Oricorio',  types:['Fire','Flying'],  cat:'Danza Mariposa',ability:'Bailarín',        w:'3.4 kg', h:'0.6 m',stats:[75,70,70,98,70,93], desc:'Absorbe el néctar de flores y cambia de forma y tipo. Existen cuatro formas: Baile, Pom-Pom, Pa\'u y Sensu.'},
+  {id:742,name:'Cutiefly',  types:['Bug','Fairy'],    cat:'Colmena Hada',  ability:'Polvo Escudo',    w:'0.2 kg', h:'0.1 m',stats:[40,45,40,55,40,84], desc:'Se alimenta del néctar y el polen de las flores. Puede predecir emociones leyendo auras para obtener más néctar dulce.'},
+  {id:743,name:'Ribombee',  types:['Bug','Fairy'],    cat:'Abeja Polen',   ability:'Polvo Escudo',    w:'0.5 kg', h:'0.2 m',stats:[60,55,60,95,70,124], desc:'Recoge néctar y polen con las bolas de sus antenas para crear bolitas. Odia la lluvia porque sus alas se mojan fácilmente.'},
+  {id:744,name:'Rockruff',  types:['Rock'],           cat:'Perro Cachorro',ability:'Agallas',         w:'9.2 kg', h:'0.5 m',stats:[45,65,40,30,40,60], desc:'Muy cariñoso con su entrenador aunque puede morder sin querer en exceso de emoción. Su piedra recuerda el olor de su dueño.'},
+  {id:745,name:'Lycanroc',  types:['Rock'],           cat:'Lobo',          ability:'Roca Firme',      w:'25.0 kg',h:'0.8 m',stats:[75,115,65,55,65,112],desc:'Forma Diurna: valiente y fiel. Forma Nocturna: feroz y astuta. Forma Crepuscular: calma exterior con gran ferocidad interior.'},
+  {id:746,name:'Wishiwashi',types:['Water'],          cat:'Pececillo',     ability:'Banco',           w:'0.3 kg', h:'0.2 m',stats:[45,20,20,25,25,40], desc:'Individualmente débil. Cuando está en peligro sus lágrimas brillantes llaman a congéneres que forman un cardumen aterrador.'},
+  {id:747,name:'Mareanie',  types:['Poison','Water'], cat:'Veneno Punto',  ability:'Baba Limpia',     w:'8.0 kg', h:'0.4 m',stats:[50,53,62,43,52,45], desc:'Adora a los Corsola y los usa como alimento. Sus espinas son venenosas y el veneno se vuelve más potente con la edad.'},
+  {id:748,name:'Toxapex',   types:['Poison','Water'], cat:'Veneno Bruto',  ability:'Baba Limpia',     w:'14.5 kg',h:'0.7 m',stats:[50,63,152,53,142,35],desc:'Vive dentro de su caparazón días enteros digiriendo presas. Deja un rastro de veneno que provoca fiebres durante tres días.'},
+  {id:749,name:'Mudbray',   types:['Ground'],         cat:'Burro Barro',   ability:'Espora Lodosa',   w:'110.0 kg',h:'1.0 m',stats:[70,100,70,45,55,45],desc:'Puede cargar pesos de hasta 50 veces su propio cuerpo. Come tierra y barro para fortalecer su piel como el acero.'},
+  {id:750,name:'Mudsdale',  types:['Ground'],         cat:'Percherón',     ability:'Espora Lodosa',   w:'920.0 kg',h:'2.5 m',stats:[100,125,100,55,85,35],desc:'Sus coces cubiertas de barro son devastadoras. Los constructores de Alola usan sus huellas para evaluar la dureza del suelo.'},
+  {id:751,name:'Dewpider',  types:['Water','Bug'],    cat:'Araña Burbuja', ability:'Mojo',            w:'4.0 kg', h:'0.3 m',stats:[38,40,52,40,72,27], desc:'La burbuja de su cabeza le permite respirar fuera del agua. Dos Dewpider que se encuentran comparan el tamaño de sus burbujas.'},
+  {id:752,name:'Araquanid', types:['Water','Bug'],    cat:'Araña Agua',    ability:'Mojo',            w:'82.0 kg',h:'1.8 m',stats:[68,70,92,50,132,42], desc:'Envuelve a sus aliados en burbujas para protegerlos. Caza envolviéndose en agua y ahogando a las presas dentro de sus burbujas.'},
+  {id:753,name:'Fomantis',  types:['Grass'],          cat:'Hoz Diurna',    ability:'Recolector',      w:'1.5 kg', h:'0.3 m',stats:[40,55,35,50,35,35], desc:'Lleva a cabo la fotosíntesis mientras duerme. Si recibe suficiente luz solar acumula energía para poder evolucionar.'},
+  {id:754,name:'Lurantis',  types:['Grass'],          cat:'Hoz Diurna',    ability:'Recolector',      w:'18.5 kg',h:'0.9 m',stats:[70,105,90,80,90,45], desc:'Se camufla como una flor para atrapar presas desprevenidas. Requiere cuidado constante para mantener su apariencia floral.'},
+  {id:755,name:'Morelull',  types:['Grass','Fairy'],  cat:'Seta Iluminada',ability:'Efecto Espora',   w:'1.5 kg', h:'0.2 m',stats:[40,35,55,65,75,15], desc:'Absorbe nutrientes de raíces por la noche. Sus esporas brillantes provocan sueño y alucinaciones en quienes las inhalan.'},
+  {id:756,name:'Shiinotic', types:['Grass','Fairy'],  cat:'Seta Iluminada',ability:'Efecto Espora',   w:'11.5 kg',h:'1.0 m',stats:[60,45,80,90,100,30], desc:'La luz parpadeante de su sombrero es hipnótica. Quienes entran al bosque de noche corren el riesgo de quedar hechizados.'},
+  {id:757,name:'Salandit',  types:['Poison','Fire'],  cat:'Lagarto Tóxico',ability:'Corrosión',       w:'4.8 kg', h:'0.6 m',stats:[48,44,40,71,40,77], desc:'Produce un gas tóxico y flamable. Las hembras son especialmente temibles ya que pueden envenenar a Pokémon tipo Acero.'},
+  {id:758,name:'Salazzle',  types:['Poison','Fire'],  cat:'Lagarto Tóxico',ability:'Corrosión',       w:'22.2 kg',h:'1.2 m',stats:[68,64,60,111,60,117],desc:'Solo existen hembras de esta especie. Forma harenes con Salandit machos. Su gas paraliza a quienes lo inhalan.'},
+  {id:759,name:'Stufful',   types:['Normal','Fighting'],cat:'Agarre Fuerte',ability:'Planta Baja',    w:'6.8 kg', h:'0.5 m',stats:[70,75,50,45,50,50], desc:'Odia que lo abracen y agita los brazos para rechazar. Su adorable apariencia atrae a quienes desconocen su poder.'},
+  {id:760,name:'Bewear',    types:['Normal','Fighting'],cat:'Fuerza Bruta', ability:'Planta Baja',    w:'135.0 kg',h:'2.1 m',stats:[120,125,80,55,60,60],desc:'Los Bewear que abrazan con cariño son los más peligrosos. Sus abrazos pueden partir postes de metal por la mitad.'},
+  {id:761,name:'Bounsweet', types:['Grass'],          cat:'Fruta',         ability:'Manto Hada',      w:'3.2 kg', h:'0.3 m',stats:[42,30,38,30,38,32], desc:'Su cuerpo desprende un aroma tan agradable que los Pokémon lo confunden con fruta y lo tragan accidentalmente.'},
+  {id:762,name:'Steenee',   types:['Grass'],          cat:'Fruta Piñón',   ability:'Manto Hada',      w:'8.2 kg', h:'0.7 m',stats:[52,40,48,40,48,62], desc:'Sus sépalos son muy resistentes y repelen a los Pokémon más pequeños. Baila alegremente sin importarle lo que ocurre.'},
+  {id:763,name:'Tsareena',  types:['Grass'],          cat:'Reina Fruta',   ability:'Manto Hada',      w:'21.4 kg',h:'1.2 m',stats:[72,120,98,50,98,72], desc:'Sus largas y elegantes piernas son su mejor arma. Destruye rivales con patadas contundentes y un semblante altivo y frío.'},
+  {id:764,name:'Comfey',    types:['Fairy'],          cat:'Guirnalda',     ability:'Recolector',      w:'0.3 kg', h:'0.1 m',stats:[51,52,90,82,110,100],desc:'Recoge flores y las une a su guirnalda. Tiene predilección por personas que sufren y los cura con las sustancias de sus flores.'},
+  {id:765,name:'Oranguru',  types:['Normal','Psychic'],cat:'Sabio',        ability:'Psíquico Fuerte', w:'76.0 kg',h:'1.5 m',stats:[90,60,80,90,110,60], desc:'Crea abanicos con hojas y huesos. Los Pokémon que se pelean en el bosque van a buscar el consejo de Oranguru.'},
+  {id:766,name:'Passimian', types:['Fighting'],       cat:'Cooperación',   ability:'Amigos con Tod.', w:'82.8 kg',h:'2.0 m',stats:[100,120,90,40,60,80], desc:'Trabaja en equipo usando bayas como proyectiles. Sigue una estricta jerarquía en la que el líder selecciona a los lanzadores.'},
+  {id:767,name:'Wimpod',    types:['Bug','Water'],    cat:'Bicho Cobarde', ability:'Escurridizo',     w:'12.0 kg',h:'0.5 m',stats:[25,35,40,20,30,80], desc:'Huye ante cualquier movimiento y come basura. Aunque es cobarde, es muy útil para el ecosistema porque limpia el fondo del mar.'},
+  {id:768,name:'Golisopod', types:['Bug','Water'],    cat:'Guerrero Duro', ability:'Emergencia',      w:'108.0 kg',h:'2.0 m',stats:[75,125,140,60,90,40],desc:'Sus seis brazos se mueven como relámpagos para aniquilar rivales. En tiempos de paz medita en el fondo del mar tranquilamente.'},
+  {id:769,name:'Sandygast', types:['Ghost','Ground'], cat:'Castillo Arena',ability:'Arenas Mov.',     w:'70.0 kg',h:'0.5 m',stats:[55,55,80,70,45,15], desc:'Nació de la mala voluntad atrapada bajo la arena. Si pones la mano en su boca en forma de túnel, tomará el control de tu mente.'},
+  {id:770,name:'Palossand', types:['Ghost','Ground'], cat:'Castillo Arena',ability:'Arenas Mov.',     w:'250.0 kg',h:'1.3 m',stats:[85,75,110,100,75,35],desc:'Sus pequeñas patas fantasmales atraen a presas desprevenidas. Absorbe la energía vital de sus víctimas para expandirse.'},
+  {id:771,name:'Pyukumuku', types:['Water'],          cat:'Pepino Mar',    ability:'Inmunidad',       w:'1.2 kg', h:'0.3 m',stats:[55,60,130,30,130,5],  desc:'Si lo lanzas al mar regresará al mismo punto de la playa. Un trabajo local consiste en lanzar a los que invaden destinos turísticos.'},
+  {id:772,name:'Type: Null',types:['Normal'],         cat:'Vida Sintetiz.',ability:'Armadura Battle', w:'120.5 kg',h:'1.9 m',stats:[95,95,95,95,95,59], desc:'Creado por el hombre para combatir a Pokémon del Ultra Espacio. La carcasa suprime sus poderes y mantiene su mente estable.'},
+  {id:773,name:'Silvally',  types:['Normal'],         cat:'Vida Sintetiz.',ability:'Cambiaforma RKS', w:'100.5 kg',h:'2.3 m',stats:[95,95,95,95,95,95], desc:'Cuando confía en su entrenador rompe su carcasa y desata su poder total. Cambia de tipo según el chip que porta en su cabeza.'},
+  {id:774,name:'Minior',    types:['Rock','Flying'],  cat:'Meteorito',     ability:'Escudo Meteoro',  w:'40.0 kg',h:'0.3 m',stats:[60,100,60,100,60,60], desc:'Flota en la mesosfera. Cuando cae a la Tierra la fricción quema su carcasa y revela su colorido núcleo interior.'},
+  {id:775,name:'Komala',    types:['Normal'],         cat:'Koala Durmiente',ability:'Dormilón',       w:'19.9 kg',h:'0.4 m',stats:[65,115,65,75,95,65], desc:'Desde su nacimiento duerme siempre. Come, crece y lucha todo mientras duerme. Nunca se separa del tronco entre sus brazos.'},
+  {id:776,name:'Turtonator', types:['Fire','Dragon'], cat:'Tortuga Explosión',ability:'Caparazón',    w:'212.0 kg',h:'2.0 m',stats:[60,78,135,91,85,36], desc:'Las espinas de su espalda estallan si alguien las toca. Pokémon que se alimentan de azufre cerca de volcanes desarrollaron escudos similares.'},
+  {id:777,name:'Togedemaru',types:['Electric','Steel'],cat:'Punta Metál',  ability:'Atraerrayos',    w:'3.3 kg', h:'0.3 m',stats:[65,98,63,40,73,96], desc:'Lanza las espinas de su espalda como proyectiles eléctricos. Cuando detecta una descarga eléctrica la absorbe directamente.'},
+  {id:778,name:'Mimikyu',   types:['Ghost','Fairy'],  cat:'Disfrazado',    ability:'Disfraz',         w:'0.7 kg', h:'0.2 m',stats:[55,90,80,50,105,96], desc:'Vive escondido bajo un disfraz de Pikachu para hacer amigos. Su verdadero aspecto es tan aterrador que puede causar graves enfermedades.'},
+  {id:779,name:'Bruxish',   types:['Water','Psychic'],cat:'Gruñón Dientes',ability:'Dientes Fuertes', w:'19.0 kg',h:'0.9 m',stats:[68,105,70,70,70,92], desc:'Emite intensas ondas psíquicas a través de su frente. Cruje sus dientes constantemente para mantener sus poderes activos.'},
+  {id:780,name:'Drampa',    types:['Normal','Dragon'],cat:'Plácido',       ability:'Levedad',         w:'185.0 kg',h:'3.0 m',stats:[78,60,85,135,91,36], desc:'Vive en alta altitud y baja a los pueblos para jugar con los niños. Si alguien hace llorar a un niño, se enfurece terriblemente.'},
+  {id:781,name:'Dhelmise',  types:['Ghost','Grass'],  cat:'Ancla Fantasma',ability:'Potencia Verde',  w:'210.0 kg',h:'3.9 m',stats:[70,131,100,86,90,40], desc:'Las algas envuelven un ancla y una cadena oxidada dando vida a este Pokémon. Absorbe la energía vital de barcos atrapados.'},
+  {id:782,name:'Jangmo-o',  types:['Dragon'],         cat:'Dragón Escama', ability:'Roca Firme',      w:'29.7 kg',h:'0.6 m',stats:[45,55,65,45,45,45], desc:'Golpea sus escamas entre sí para hacer sonar señales a sus compañeros. Vive en zonas montañosas para entrenarse sin molestar.'},
+  {id:783,name:'Hakamo-o',  types:['Dragon','Fighting'],cat:'Escama',      ability:'Roca Firme',      w:'47.0 kg',h:'1.2 m',stats:[55,75,90,65,70,65], desc:'Entrena a diario golpeándose contra rocas. Cada vez que gana una batalla, pierde una escama que entrega como trofeo.'},
+  {id:784,name:'Kommo-o',   types:['Dragon','Fighting'],cat:'Escama Acorazada',ability:'Roca Firme',  w:'78.2 kg',h:'1.6 m',stats:[75,110,125,100,105,85],desc:'Hace sonar sus escamas para intimidar rivales. Los guerreros de antaño coleccionaban sus escamas como señal de victoria.'},
+  {id:785,name:'Tapu Koko', types:['Electric','Fairy'],cat:'Divinidad Isla',ability:'Canción Eléctri.',w:'20.5 kg',h:'1.8 m',stats:[70,115,85,95,75,130],desc:'Dios protector de Melemele. Caprichoso y olvidadizo, ayuda a quienes están en peligro sin razón aparente y luego los olvida.'},
+  {id:786,name:'Tapu Lele', types:['Psychic','Fairy'], cat:'Divinidad Isla',ability:'Cura Psíquica',  w:'18.6 kg',h:'1.2 m',stats:[70,85,75,130,115,95], desc:'Diosa protectora de Akala. Esparce escamas brillantes que curan, pero también pueden dañar. Es indiferente al sufrimiento que causa.'},
+  {id:787,name:'Tapu Bulu', types:['Grass','Fairy'],   cat:'Divinidad Isla',ability:'Cosecha',        w:'45.5 kg',h:'1.9 m',stats:[70,130,115,85,95,75], desc:'Dios protector de Ula\'ula. Silencioso pero de gran poder. Puede hacer crecer plantas a voluntad; a veces destruye aldeas.'},
+  {id:788,name:'Tapu Fini', types:['Water','Fairy'],   cat:'Divinidad Isla',ability:'Niebla Mística', w:'21.2 kg',h:'1.3 m',stats:[70,75,115,95,130,85], desc:'Diosa protectora de Poni. Genera una niebla que nubla la mente y hace que los enemigos se destruyan entre sí.'},
+  {id:789,name:'Cosmog',    types:['Psychic'],          cat:'Nebulosa',     ability:'Aura Quiebre',   w:'0.1 kg', h:'0.2 m',stats:[43,29,31,29,31,37], desc:'Un Pokémon misterioso llamado "la bolsa estelar" en los mitos de Alola. Absorbe luz y materia del aire sin perder su carácter amigable.'},
+  {id:790,name:'Cosmoem',   types:['Psychic'],          cat:'Larva Estelar',ability:'Aura Quiebre',   w:'999.9 kg',h:'0.1 m',stats:[43,29,131,29,131,37],desc:'Su concha dorada es más dura que cualquier material conocido. Los astrónomos de Alola lo llaman "la semilla que alberga el universo".'},
+  {id:791,name:'Solgaleo',  types:['Psychic','Steel'], cat:'Niño del Sol',  ability:'Aura Quiebre',   w:'230.0 kg',h:'3.4 m',stats:[137,137,107,113,89,97],desc:'Se dice que es la encarnación del sol. Cuando se activa, toda la oscuridad es devorada por su radiante y pura luz solar.'},
+  {id:792,name:'Lunala',    types:['Psychic','Ghost'],  cat:'Niño de la Luna',ability:'Sombra Tela',  w:'120.0 kg',h:'4.0 m',stats:[137,113,89,137,107,97],desc:'Se dice que es la encarnación de la luna. Despliega sus alas para crear una oscuridad absoluta. Sus ojos brillan como estrellas.'},
+  {id:793,name:'Nihilego',  types:['Rock','Poison'],    cat:'Parásito UB',  ability:'Aislante',       w:'55.5 kg',h:'1.2 m',stats:[109,53,47,127,131,103],desc:'Una Ultra Bestia en forma de medusa. Inyecta una neurotoxina en sus huéspedes que provoca comportamiento eufórico e irreflexivo.'},
+  {id:794,name:'Buzzwole',  types:['Bug','Fighting'],   cat:'Moscón UB',    ability:'Bestia Rapiña',  w:'333.6 kg',h:'2.4 m',stats:[107,139,139,53,53,79], desc:'Tiene una musculatura que desafía las leyes de la física conocida. Absorbe la vitalidad de seres vivos con sus afilados colmillos.'},
+  {id:795,name:'Pheromosa', types:['Bug','Fighting'],   cat:'Cucaracha UB', ability:'Bestia Rapiña',  w:'25.0 kg',h:'1.8 m',stats:[71,137,37,137,37,151], desc:'Su velocidad y elegancia son incomparables. Encuentra todo repugnante y evita cualquier contacto moviéndose a gran velocidad.'},
+  {id:796,name:'Xurkitree', types:['Electric'],         cat:'Tendido UB',   ability:'Bestia Rapiña',  w:'100.0 kg',h:'3.8 m',stats:[83,89,71,173,71,83], desc:'Clava sus extremidades en el suelo para absorber electricidad directamente de la tierra. Emite destellos de alta potencia.'},
+  {id:797,name:'Celesteela',types:['Steel','Flying'],   cat:'Cohete UB',    ability:'Bestia Rapiña',  w:'999.9 kg',h:'9.2 m',stats:[97,101,103,107,101,61],desc:'Uno de los Pokémon más pesados conocidos. Su interior contiene gases de alta presión que dispara para propulsarse como cohete.'},
+  {id:798,name:'Kartana',   types:['Grass','Steel'],    cat:'Origami UB',   ability:'Bestia Rapiña',  w:'0.1 kg', h:'0.3 m',stats:[59,181,131,59,31,109], desc:'Su cuerpo en forma de papel tiene filo extremo. A pesar de su delgadez, puede cortar los más gruesos árboles con un solo movimiento.'},
+  {id:799,name:'Guzzlord',  types:['Dark','Dragon'],    cat:'Devorador UB', ability:'Bestia Rapiña',  w:'888.0 kg',h:'5.5 m',stats:[223,101,53,97,53,43], desc:'Devora sin parar montañas y edificios. Pese a la enorme cantidad que ingiere no produce ningún tipo de desechos.'},
+  {id:800,name:'Necrozma',  types:['Psychic'],          cat:'Luz Prismática',ability:'Prismática',    w:'230.0 kg',h:'1.8 m',stats:[97,107,101,127,89,79], desc:'Absorbe la luz para sobrevivir. Su cuerpo primitivo de un negro intenso absorbe y refracta toda la luz a su alrededor.'},
+  {id:801,name:'Magearna',  types:['Steel','Fairy'],    cat:'Artificial',   ability:'Corazón Alma',   w:'80.5 kg',h:'1.0 m',stats:[80,95,115,130,115,65], desc:'Creada hace 500 años por un inventor genial. Su Corazón Alma puede sentir emociones y mantenerse activo si el cuerpo es destruido.'},
+  {id:802,name:'Marshadow', types:['Fighting','Ghost'], cat:'Pokémon Sombra',ability:'Tec. Fantasma', w:'22.2 kg',h:'0.7 m',stats:[90,125,80,90,90,125], desc:'Se oculta en las sombras de los demás y copia sus movimientos. Muy tímido; huye antes de que cualquiera pueda verlo claramente.'},
+  {id:803,name:'Poipole',   types:['Poison'],           cat:'Aguja Veneno', ability:'Bestia Rapiña',  w:'1.8 kg', h:'0.6 m',stats:[67,73,67,73,67,73], desc:'Una Ultra Bestia con la que los habitantes del Ultra Espacio conviven amigablemente. Rocía veneno viscoso con gran precisión.'},
+  {id:804,name:'Naganadel', types:['Poison','Dragon'],  cat:'Aguja Veneno', ability:'Bestia Rapiña',  w:'78.0 kg',h:'3.6 m',stats:[73,73,73,127,73,121], desc:'Almacena más de 10.000 litros de veneno en su cuerpo. Vuela a velocidades supersónicas y se comunica con sonidos de alta frecuencia.'},
+  {id:805,name:'Stakataka', types:['Rock','Steel'],     cat:'Muro UB',      ability:'Bestia Rapiña',  w:'820.0 kg',h:'5.5 m',stats:[61,131,211,53,101,13], desc:'Parece un muro de piedra, pero está formado por innumerables criaturas apiladas. Cada una tiene un ojo que observa sin descanso.'},
+  {id:806,name:'Blacephalon',types:['Fire','Ghost'],    cat:'Fuegos Artif.',ability:'Bestia Rapiña',  w:'13.0 kg',h:'1.8 m',stats:[53,127,53,151,79,107], desc:'Se arranca la cabeza y la hace explotar para distraer rivales. La explosión de sus cabezas roba energía vital de quienes la presencian.'},
+  {id:807,name:'Zeraora',   types:['Electric'],         cat:'Velocidad Rayo',ability:'Impulso',       w:'44.5 kg',h:'1.5 m',stats:[88,112,75,102,80,143], desc:'Se mueve a velocidades del rayo y genera plasma eléctrico en sus patas. Es conocido en Alola como "el felino eléctrico misterioso".'},
+];
+
+const STAT_N=['HP','ATK','DEF','SpA','SpD','SPD'];
+
+// Múltiples fuentes por si alguna está bloqueada en la red del usuario.
+// Orden: GitHub raw (PokeAPI) -> jsDelivr (mismo repo, CDN distinto) -> PokemonDB
+function spriteThumbSources(id){
+  return [
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+    `https://cdn.jsdelivr.net/gh/PokeAPI/sprites/sprites/pokemon/${id}.png`,
+    `https://img.pokemondb.net/sprites/sword-shield/icon/${String(id).padStart(3,'0')}.png`
+  ];
+}
+function spriteArtSources(id){
+  return [
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+    `https://cdn.jsdelivr.net/gh/PokeAPI/sprites/sprites/pokemon/other/official-artwork/${id}.png`,
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+  ];
+}
+// Engancha una cascada de fuentes a un <img>: si una falla (onerror), prueba la siguiente.
+function loadWithFallback(img, sources){
+  let i=0;
+  img.onerror=()=>{
+    i++;
+    if(i<sources.length){ img.src=sources[i]; }
+    else{ img.onerror=null; img.style.visibility='hidden'; }
+  };
+  img.style.visibility='visible';
+  img.src=sources[0];
+}
+
+// ── STATE ────────────────────────────────────────────────────
+let curId=722, filtered=[...PKM];
+
+// ── RENDER LIST ──────────────────────────────────────────────
+function renderList(data){
+  const el=document.getElementById('pokeList');
+  el.innerHTML='';
+  if(!data.length){el.innerHTML='<div class="no-res">Sin resultados</div>';return;}
+  data.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='poke-row'+(p.id===curId?' active':'');
+    d.dataset.id=p.id;
+    d.innerHTML=`<span class="pr-num">#${String(p.id).padStart(3,'0')}</span>
+      <img class="pr-thumb" alt="${p.name}">
+      <span class="pr-name">${p.name}</span>
+      <div class="pr-types">${p.types.map(badge).join('')}</div>`;
+    d.addEventListener('click',()=>select(p.id));
+    el.appendChild(d);
+    loadWithFallback(d.querySelector('.pr-thumb'), spriteThumbSources(p.id));
+  });
+  document.getElementById('cntTxt').textContent=`${data.length} / ${PKM.length}`;
+}
+
+// ── SELECT POKÉMON ───────────────────────────────────────────
+function select(id){
+  curId=id;
+  const p=PKM.find(x=>x.id===id);
+  if(!p) return;
+
+  // list highlight
+  document.querySelectorAll('.poke-row').forEach(r=>r.classList.toggle('active',+r.dataset.id===id));
+  document.querySelector('.poke-row.active')?.scrollIntoView({block:'nearest'});
+
+  // top bar
+  document.getElementById('rsNum').textContent='#'+String(p.id).padStart(3,'0');
+  document.getElementById('rsName').textContent=p.name;
+  document.getElementById('rsTypes').innerHTML=p.types.map(badge).join('');
+
+  // sprite — cascada de fuentes: artwork oficial (varias CDNs) -> sprite simple
+  const img=document.getElementById('mainSprite');
+  loadWithFallback(img, spriteArtSources(p.id));
+
+  // mini data under sprite
+  document.getElementById('miniData').innerHTML=`
+    <div class="smd-row"><span class="smd-lbl">CATEG.</span><span class="smd-val">${p.cat}</span></div>
+    <div class="smd-row"><span class="smd-lbl">HABIL.</span><span class="smd-val">${p.ability}</span></div>
+    <div class="smd-row"><span class="smd-lbl">PESO</span><span class="smd-val">${p.w}</span></div>
+    <div class="smd-row"><span class="smd-lbl">ALTURA</span><span class="smd-val">${p.h}</span></div>`;
+
+  // stats
+  const total=p.stats.reduce((a,b)=>a+b,0);
+  document.getElementById('statsRows').innerHTML=p.stats.map((v,i)=>{
+    const pct=Math.min(100,Math.round(v/255*100));
+    return `<div class="stat-row">
+      <span class="sn">${STAT_N[i]}</span>
+      <div class="sb-bg"><div class="sb-fill" style="width:${pct}%;background:${statColor(v)}"></div></div>
+      <span class="sv">${v}</span>
+    </div>`;
+  }).join('')+`<div class="stat-row" style="margin-top:2px;border-top:1px solid #1a3020;padding-top:3px">
+    <span class="sn" style="color:#ff8c40">TOT</span>
+    <div class="sb-bg"><div class="sb-fill" style="width:${Math.min(100,Math.round(total/780*100))}%;background:linear-gradient(90deg,#ff6a00,#ffcc00)"></div></div>
+    <span class="sv" style="color:#ffcc00">${total}</span>
+  </div>`;
+
+  // data grid
+  document.getElementById('dataGrid').innerHTML=`
+    <div class="dg-cell"><div class="dg-lbl">Categoría</div><div class="dg-val">${p.cat}</div></div>
+    <div class="dg-cell"><div class="dg-lbl">Habilidad</div><div class="dg-val">${p.ability}</div></div>
+    <div class="dg-cell"><div class="dg-lbl">Peso</div><div class="dg-val">${p.w}</div></div>
+    <div class="dg-cell"><div class="dg-lbl">Altura</div><div class="dg-val">${p.h}</div></div>`;
+
+  // description
+  document.getElementById('descTxt').textContent=p.desc;
+  document.getElementById('statusTxt').textContent=`DATOS CARGADOS · ${p.name.toUpperCase()}`;
+}
+
+// ── FILTER ───────────────────────────────────────────────────
+function filterList(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  filtered=PKM.filter(p=>
+    p.name.toLowerCase().includes(q)||
+    String(p.id).includes(q)||
+    p.types.some(t=>t.toLowerCase().includes(q))||
+    p.cat.toLowerCase().includes(q)
+  );
+  renderList(filtered);
+}
+
+// ── KEYBOARD NAV ─────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const i=filtered.findIndex(p=>p.id===curId);
+  if(e.key==='ArrowDown'&&i<filtered.length-1) select(filtered[i+1].id);
+  if(e.key==='ArrowUp'  &&i>0)                  select(filtered[i-1].id);
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+renderList(PKM);
+select(722);
+</script>
+</body>
+</html>
